@@ -1,36 +1,73 @@
 
-import List from './List';
-import Details from './Details';
-import './App.css';
-import TMDB from './TMDB'
 
 
-
-import React, { Component } from 'react'
-
+import React, { Component } from "react";
+import TMDB from "./TMDB";
+import FilmListing from "./List";
+import FilmDetails from "./Details";
+import axios from "axios";
 export default class App extends Component {
-  state={
-films: TMDB.films,
-faves: [],
-current: {}
+  constructor() {
+    super();
+    this.handleFaveToggle = this.handleFaveToggle.bind(this);
+    this.handleDetailsClick = this.handleDetailsClick.bind(this);
   }
-  handleFaveToggle=(film)=>{
-    const faves=this.state.faves.slice();
-    const filmIndex= faves.indexOf()
-    if(filmIndex!=-1)
-    console.log("Adding [FILM NAME] from faves...")
-    else
-    console.log("Removing [FILM NAME] from faves...")
+  state = {
+    films: TMDB.films,
+    faves: [],
+    current: {}
+  };
+
+  handleDetailsClick(film) {
+    
+    const url = 'https://api.themoviedb.org/3/movie/${film.id}?api_key=${TMDB.api_key}&append_to_response=videos,images&language=en'
+
+    axios({
+      method: 'GET',
+      url: url
+    }).then(response => {
+      console.log(response) 
+      console.log(`Fetching details for ${film.title}`);
+      this.setState({ current: response.data });
+
+    })
+    .catch(error=>console.log(error));
+  
   }
+
+  handleFaveToggle(film) {
+    const faves = this.state.faves.slice();
+    const filmIndex = this.state.faves.indexOf(film);
+    console.log(faves);
+
+    if (filmIndex < 0) {
+      faves.push(film);
+      console.log("adding " + film);
+    } else {
+      faves.splice(filmIndex, 1);
+      console.log("removing " + film);
+    }
+    console.log(faves);
+
+    this.setState({ faves });
+  }
+
   render() {
-    this.handleFaveToggle = this.handleFaveToggle.bind(this)
     return (
       <div className="film-library">
-  
-  <List db={this.state.films}/>
+        <div className="film-list">
+          <FilmListing
+            films={this.state.films}
+            faves={this.state.faves}
+            onFaveToggle={this.handleFaveToggle}
+            onDetailsClick={this.handleDetailsClick}
+          />
+        </div>
 
-  <Details film={this.state.films}/>
-  </div>
-    )
+        <div className="film-details">
+          <FilmDetails  film={this.state.current}/>
+        </div>
+      </div>
+    );
   }
 }
